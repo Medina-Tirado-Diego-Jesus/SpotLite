@@ -1,5 +1,3 @@
-El archivo que has subido contiene la documentación de una aplicación web llamada "BookHub". A continuación, te generaré un nuevo archivo README.md para tu proyecto de widget de Spotify, al que llamaremos "Spotlite". El contenido estará adaptado específicamente a los detalles y funcionalidades que hemos discutido.
-
 ### README.md para "Spotlite"
 
 ```markdown
