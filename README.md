@@ -1,96 +1,75 @@
-### README.md para "Spotlite"
-
-```markdown
-# Spotlite - Widget de Spotify
-
 ## Introducción
 
-**Spotlite** es un widget personalizable para Spotify, desarrollado con **Electron.js**, que permite a los usuarios controlar y visualizar la reproducción de música directamente desde su escritorio en Windows. Spotlite ofrece una interfaz ligera, altamente personalizable e interactiva, brindando una experiencia conveniente y elegante para los amantes de la música.
+**Spotlite** es un widget de escritorio desarrollado con Electron.js, diseñado para proporcionar una experiencia interactiva y personalizable que facilita el control de la reproducción musical en Spotify directamente desde el escritorio de Windows. Con Spotlite, los usuarios pueden gestionar su música sin necesidad de abrir la aplicación completa de Spotify, además de contar con opciones de personalización para adaptar la interfaz a sus preferencias.
 
-Con **Spotlite**, los usuarios pueden ver información de la canción actual, controlar la reproducción y personalizar el aspecto del widget según sus preferencias. La aplicación está pensada inicialmente para uso personal, pero su diseño escalable permite futuras expansiones.
+El propósito de Spotlite es ofrecer un acceso rápido y sencillo a las funcionalidades básicas de Spotify en un formato minimalista y eficiente, mejorando la experiencia de los usuarios que desean controlar su música mientras trabajan o realizan otras tareas.
 
-## Funcionalidades
+### Colaboradores del Proyecto
 
-### Controles y datos a mostrar
-- Visualización de la carátula del álbum.
-- Mostrar el nombre de la canción y el artista.
-- Barra de progreso de la canción.
-- Botón de Play/Pause.
-- Botones para cambiar de canción (anterior/siguiente).
-- Control de volumen ajustable.
-- Botón para añadir canciones a favoritos.
-- Información sobre el tiempo restante de la canción.
-- Acceso a la cola de reproducción.
-- Opción de mezclar o repetir canciones.
+| **Nombre**                        | **Rol**                                     | **Perfil**                                                 |
+|-----------------------------------|---------------------------------------------|------------------------------------------------------------|
+| [Tu Nombre]                       | Líder del Proyecto | [LinkedIn](https://www.linkedin.com)                        |
 
-### Personalización del Widget
-- Cambiar entre temas claro y oscuro.
-- Personalizar los colores del widget (fondo, texto, botones).
-- Ajustar el tamaño del widget (pequeño, mediano, grande).
-- Arrastrar y soltar elementos dentro del widget.
-- Selección del diseño de carátula (circular, cuadrada, sin carátula).
-- Ajustar la transparencia del widget.
-- Estilos de barra de progreso (lineal, circular).
-- Mostrar u ocultar elementos específicos (artista, álbum, etc.).
-- Posicionar los controles en diferentes áreas (arriba, abajo, lateral).
-- Widgets flotantes para separar los controles de la información.
-- Integración con fondos de pantalla dinámicos.
-- Redondear las esquinas del widget.
-- Opciones de visualización de texto (scrolling, fading).
-- Activar o desactivar los bordes del widget.
+### Revisa el Progreso del Proyecto Spotlite
 
-## Requisitos
+| **Columna**       | **Descripción**                                                                                                                                    |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Backlog**       | Contiene todas las ideas, características y mejoras que deben implementarse.                                                                       |
+| **En Progreso**   | Las tareas que están actualmente en desarrollo, como la integración con la API de Spotify y el diseño del widget.                                   |
+| **Revisión**      | Después de completar una tarea, se mueve aquí para revisión de código y pruebas de funcionamiento.                                                   |
+| **En Pruebas**    | Las tareas que están en proceso de pruebas para asegurar que todo funcione correctamente antes del lanzamiento.                                      |
+| **Hecho**         | Tareas completamente desarrolladas, revisadas y probadas que ya están listas para ser utilizadas en el widget.                                      |
 
-- **Sistema Operativo**: Windows
-- **Framework**: Electron.js
-- **Lenguajes**: JavaScript, HTML, CSS
-- **API**: Spotify Web API (requiere autenticación OAuth2)
+### Funcionalidades de la Aplicación Spotlite
 
-## Instalación
+#### **Módulo de Reproducción**
 
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/Medina-Tirado-Diego/SpotLite.git
-   ```
+- **Controles de Reproducción:**
+    - Play/Pause, siguiente y anterior canción.
+    - Control de volumen ajustable.
+    - Opción de añadir canciones a favoritos.
 
-2. Navega al directorio del proyecto:
-   ```bash
-   cd spotlite
-   ```
+- **Visualización de Información:**
+    - Mostrar el nombre de la canción actual.
+    - Mostrar el nombre del artista y la carátula del álbum.
+    - Barra de progreso de la canción.
+    - Mostrar el tiempo restante de la canción.
+    - Acceso a la cola de reproducción.
+    - Opción de mezclar o repetir canciones.
 
-3. Instala las dependencias necesarias:
-   ```bash
-   npm install
-   ```
+#### **Módulo de Personalización**
 
-4. Ejecuta la aplicación en modo desarrollo:
-   ```bash
-   npm start
-   ```
+- **Personalización de la Interfaz:**
+    - Cambiar entre temas claro y oscuro.
+    - Personalizar los colores del fondo, texto y botones del widget.
+    - Ajustar el tamaño del widget (pequeño, mediano, grande).
+    - Opción de arrastrar y soltar los elementos dentro del widget.
+    - Diseño de la carátula personalizable (circular, cuadrada o sin carátula).
+    - Ajuste de transparencia del widget.
+    - Elegir entre barras de progreso lineales o circulares.
+    - Mostrar u ocultar elementos como el artista o el álbum.
+    - Colocar los controles en diferentes posiciones (arriba, abajo, lateral).
+    - Separar los controles de reproducción de la información de la canción (widget flotante).
 
-## Configuración de la API de Spotify
+#### **Módulo de Notificaciones**
 
-1. Crea una cuenta de desarrollador en [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/).
-2. Genera un nuevo proyecto y obtén tus claves de autenticación.
-3. Configura los tokens OAuth2 en el archivo `.env` para integrarlo con Spotlite.
+- **Notificaciones de Cambio de Canción:**
+    - Mostrar el nombre de la canción de manera discreta y pequeña cuando cambia la canción, sin interrumpir el flujo de trabajo del usuario.
 
-## Uso
+### Diagramas de la Aplicación
 
-- Al ejecutar la aplicación, el widget de Spotify aparecerá en tu escritorio.
-- Personaliza el widget utilizando el menú de configuración, donde podrás ajustar el tamaño, los colores y la disposición de los controles.
-- Controla la reproducción de canciones y accede a tu cola de reproducción directamente desde el widget.
+#### Diagrama de Componentes
 
-## Licencia
+![Diagrama de Componentes](diagrama_componentes_spotlite.png)
 
-Este proyecto está bajo la licencia MIT. Puedes encontrar más detalles en el archivo [LICENSE](LICENSE).
+Este diagrama muestra los componentes principales de Spotlite, como los controles de reproducción, la visualización de la información de la canción, y las opciones de personalización del widget.
 
-## Contribuciones
+### Descripción de Capas del Proyecto
 
-Las contribuciones son bienvenidas. Si deseas mejorar Spotlite, por favor, abre un issue o envía un pull request.
-
-## Autor
-
-- **Medina Tirado Diego Jesus** - Desarrollador Principal
-```
-
-Este README está diseñado para detallar el propósito, funcionalidades, instalación y uso de "Spotlite".
+| capa        | descripción                                                                                  |
+|-------------|----------------------------------------------------------------------------------------------|
+| api         | Maneja la interacción con la API de Spotify, obteniendo datos como la canción actual, listas de reproducción y controles de reproducción. |
+| ui          | Contiene el diseño y la interfaz de usuario del widget, permitiendo personalizaciones y mostrando la información de la canción.            |
+| services    | Proporciona la lógica de negocio que conecta la API de Spotify con la interfaz, manejando las peticiones y respuestas.                     |
+| components  | Define los componentes visuales reutilizables, como botones de control, barra de progreso y la visualización de la carátula del álbum.     |
+| notifications | Implementa el sistema de notificaciones para cambios de canción y otros eventos dentro de Spotify.                                      |
