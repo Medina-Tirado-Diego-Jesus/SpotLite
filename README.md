@@ -8,7 +8,7 @@ El propósito de Spotlite es ofrecer un acceso rápido y sencillo a las funciona
 
 | **Nombre**                        | **Rol**                                     | **Perfil**                                                 |
 |-----------------------------------|---------------------------------------------|------------------------------------------------------------|
-| [Tu Nombre]                       | Líder del Proyecto | [LinkedIn](https://www.linkedin.com)                        |
+| Medina Tirado Diego Jesús                       | Líder del Proyecto | [LinkedIn]([https://www.linkedin.com](https://www.linkedin.com/in/diego-medina-tirado-03b255310?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BTYrTrVpGQ0eZXpbPQOqUsg%3D%3D))                        |
 
 ### Revisa el Progreso del Proyecto Spotlite
 
