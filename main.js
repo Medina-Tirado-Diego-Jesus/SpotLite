@@ -71,26 +71,28 @@ function requestAccessToken(code) {
 // Función para actualizar el token de acceso cuando expire
 function refreshAccessToken() {
   console.log("Actualizando token de acceso...");
-  
+
   if (!refreshToken) {
     console.error("No se ha proporcionado un refresh token");
     return Promise.reject(new Error("No refresh token available"));
   }
 
   const authOptions = {
-    method: 'POST',
-    url: 'https://accounts.spotify.com/api/token',
+    method: "POST",
+    url: "https://accounts.spotify.com/api/token",
     headers: {
-      'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
-      'Content-Type': 'application/x-www-form-urlencoded'
+      Authorization:
+        "Basic " +
+        Buffer.from(clientId + ":" + clientSecret).toString("base64"),
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    data: `grant_type=refresh_token&refresh_token=${refreshToken}`
+    data: `grant_type=refresh_token&refresh_token=${refreshToken}`,
   };
 
   return axios(authOptions)
     .then((response) => {
       if (response.data.access_token) {
-        accessToken = response.data.access_token;  // Actualiza el token de acceso globalmente
+        accessToken = response.data.access_token; // Actualiza el token de acceso globalmente
         console.log("Token de acceso actualizado correctamente.");
         return accessToken;
       } else {
@@ -99,18 +101,21 @@ function refreshAccessToken() {
       }
     })
     .catch((error) => {
-      console.error("Error al actualizar el token de acceso:", error.response ? error.response.data : error.message);
-      return Promise.reject(error);  // Rechaza si hay un error en la actualización del token
+      console.error(
+        "Error al actualizar el token de acceso:",
+        error.response ? error.response.data : error.message
+      );
+      return Promise.reject(error); // Rechaza si hay un error en la actualización del token
     });
 }
-
-
 
 // Función centralizada para realizar solicitudes a la API de Spotify
 function spotifyRequest(method, endpoint, data = null) {
   if (!accessToken) {
     console.log("El token de acceso no está disponible, actualizando...");
-    return refreshAccessToken().then(() => spotifyRequest(method, endpoint, data));  // Vuelve a hacer la solicitud con el nuevo token
+    return refreshAccessToken().then(() =>
+      spotifyRequest(method, endpoint, data)
+    ); // Vuelve a hacer la solicitud con el nuevo token
   }
 
   const options = {
@@ -135,11 +140,10 @@ function spotifyRequest(method, endpoint, data = null) {
         );
       } else {
         console.error(`Error al realizar la solicitud a ${endpoint}:`, error);
-        return Promise.reject(error);  // Asegúrate de manejar el error adecuadamente
+        return Promise.reject(error); // Asegúrate de manejar el error adecuadamente
       }
     });
 }
-
 
 // 2. Funciones para obtener información de reproducción y controlar Spotify
 
@@ -184,13 +188,14 @@ function play() {
     })
     .catch((error) => {
       if (error.response && error.response.status === 403) {
-        console.error("Error de permisos. Asegúrate de que tu cuenta de Spotify es Premium y que hay un dispositivo activo.");
+        console.error(
+          "Error de permisos. Asegúrate de que tu cuenta de Spotify es Premium y que hay un dispositivo activo."
+        );
       } else {
         console.error("Error al iniciar la reproducción:", error);
       }
     });
 }
-
 
 // Función para reproducir o pausar la canción
 function togglePlayPause() {
