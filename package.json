@@ -1,0 +1,29 @@
+{
+  "name": "spotlite",
+  "version": "1.0.0",
+  "description": "**Spotlite** es un widget de escritorio desarrollado con Electron.js, diseñado para proporcionar una experiencia interactiva y personalizable que facilita el control de la reproducción musical en Spotify directamente desde el escritorio de Windows. Con Spotlite, los usuarios pueden gestionar su música sin necesidad de abrir la aplicación completa de Spotify, además de contar con opciones de personalización para adaptar la interfaz a sus preferencias.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Medina-Tirado-Diego/SpotLite.git"
+  },
+  "author": "Medina Tirado Diego Jesús",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Medina-Tirado-Diego/SpotLite/issues"
+  },
+  "homepage": "https://github.com/Medina-Tirado-Diego/SpotLite#readme",
+  "devDependencies": {
+    "electron": "^32.0.2",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "express": "^4.19.2",
+    "open": "^10.1.0"
+  }
+}

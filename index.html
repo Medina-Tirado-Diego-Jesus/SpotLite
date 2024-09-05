@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Widget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #000;
+      margin: 0;
+      padding: 20px;
+    }
+    .widget {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      background-color: #fff;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .album-cover {
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+    }
+    .song-info {
+      flex: 1;
+      margin-left: 20px;
+    }
+    .song-info h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .song-info p {
+      margin: 0;
+      color: #666;
+    }
+    .progress-container {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .progress-bar {
+      flex: 1;
+      margin: 0 10px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .controls button {
+      background-color: transparent;
+      border: none;
+      margin: 0 5px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      color: #1db954;
+    }
+    .additional-controls {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+    .additional-controls button {
+      background-color: transparent;
+      border: none;
+      margin-left: 5px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .additional-controls button:hover {
+      color: #1db954;
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <img src="album-placeholder.jpg" alt="Album Cover" class="album-cover" id="album-cover">
+    
+    <div class="song-info">
+      <h2 id="song-title">Nombre de la Canción</h2>
+      <p id="artist-name">Nombre del Artista</p>
+
+      <div class="progress-container">
+        <span id="current-time">0:59</span>
+        <input type="range" id="progress-bar" class="progress-bar" min="0" max="100" value="59">
+        <span id="total-time">2:48</span>
+      </div>
+
+      <div class="controls">
+        <button id="prev-btn">◄◄</button>
+        <button id="play-pause-btn">⏯️</button>
+        <button id="next-btn">►►</button>
+        <button id="shuffle-btn">🔀</button>
+        <button id="repeat-btn">🔁</button>
+        <button id="volume-btn">🔊</button>
+      </div>
+    </div>
+
+    <div class="additional-controls">
+      <button id="playlist-btn">❤️</button>
+      <button id="queue-btn">📄</button>
+      <button id="settings-btn">⚙️</button>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Actualizar la interfaz cuando se recibe información sobre la canción actual
+    ipcRenderer.on('currently-playing', (event, data) => {
+      document.getElementById('song-title').innerText = data.title;
+      document.getElementById('artist-name').innerText = data.artist;
+      document.getElementById('album-cover').src = data.albumCover;
+    });
+
+    // Control de reproducción
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      ipcRenderer.send('previous-track');
+    });
+
+    document.getElementById('play-pause-btn').addEventListener('click', () => {
+      ipcRenderer.send('toggle-play-pause');
+    });
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+      ipcRenderer.send('next-track');
+    });
+
+    // Solicitar actualización de la canción actual al cargar la página
+    ipcRenderer.send('update-currently-playing');
+  </script>
+</body>
+</html>
