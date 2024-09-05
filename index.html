@@ -5,30 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spotify Widget</title>
     <style>
+      /* Asegurarse de que el widget ocupe exactamente el tamaño de la ventana */
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-        color: #000;
         margin: 0;
-        padding: 20px;
-      }
-      .widget {
+        padding: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
-        flex-direction: row;
+        justify-content: center;
         align-items: center;
-        background-color: #fff;
-        border-radius: 15px;
-        padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
-      .album-cover {
-        width: 100px;
-        height: 100px;
+
+      .widget {
+        background-color: #fff;
         border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 460px; /* Ancho de 460px */
+        height: 100px; /* Alto de 100px */
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Distribuir los elementos dentro del widget */
+      }
+
+      .album-cover {
+        width: 80px;
+        height: 80px;
+        border-radius: 5px;
       }
       .song-info {
         flex: 1;
-        margin-left: 20px;
+        margin-left: 10px;
       }
       .song-info h2 {
         margin: 0;
@@ -53,7 +60,6 @@
       .controls {
         display: flex;
         align-items: center;
-        margin-top: 10px;
       }
       .controls button {
         background-color: transparent;
@@ -62,8 +68,35 @@
         padding: 5px;
       }
       .icon {
-        width: 24px;
-        height: 24px;
+        width: 16px;
+        height: 16px;
+        margin: 0 5px;
+      }
+      .icon-shuffle {
+        width: 16px;
+        height: 16px;
+        transition: background-color 0.3s ease; /* Transición suave para el cambio de fondo */
+        padding: 5px;
+        border-radius: 5px; /* Para un borde suavizado */
+      }
+      .icon-shuffle.active {
+        background-color: #b1b1b1; /* Color de fondo sombreado */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Efecto de sombra para dar profundidad */
+      }
+      .icon-repeat {
+        width: 16px;
+        height: 16px;
+        transition: background-color 0.3s ease; /* Transición suave para el cambio de fondo */
+        padding: 5px;
+        border-radius: 5px; /* Para un borde suavizado */
+      }
+      .icon-repeat.active-list {
+        background-color: #b1b1b1; /* Fondo verde para repetir lista */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra */
+      }
+      .icon-repeat.active-track {
+        background-color: #b1b1b1; /* Fondo dorado para repetir canción */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra */
       }
       .additional-controls {
         display: flex;
@@ -129,15 +162,15 @@
               src="assets/icons/Aleatorio.png"
               alt="Aleatorio"
               id="shuffle-icon"
-              class="icon"
+              class="icon-shuffle"
             />
           </button>
           <button id="repeat-btn">
             <img
               src="assets/icons/Repetir.png"
               alt="Repetir"
-              class="icon"
               id="repeat-icon"
+              class="icon-repeat"
             />
           </button>
           <button id="volume-btn">
@@ -189,6 +222,44 @@
         }
       }
 
+      let repeatState = 0; // 0 = desactivado, 1 = repetir lista, 2 = repetir canción
+
+      // Escuchar el estado de repetir desde el proceso principal
+      ipcRenderer.on("repeat-status", (event, state) => {
+        repeatState = state;
+        updateRepeatButton(repeatState); // Actualiza el ícono basado en el estado recibido
+      });
+
+      // Manejar el clic en el botón de repetir
+      document.getElementById("repeat-btn").addEventListener("click", () => {
+        repeatState = (repeatState + 1) % 3; // Cicla entre los tres estados: 0, 1, 2
+        ipcRenderer.send("toggle-repeat", repeatState); // Enviar el estado actualizado al proceso principal
+        updateRepeatButton(repeatState); // Cambiar visualmente el botón según el estado
+      });
+
+      // Función para actualizar el ícono de repetir
+      function updateRepeatButton(state) {
+        const repeatIcon = document.getElementById("repeat-icon");
+        repeatIcon.classList.remove("active-list", "active-track"); // Remover cualquier clase activa
+
+        switch (state) {
+          case 0:
+            repeatIcon.src = "assets/icons/Repetir.png"; // Ícono de repetir desactivado
+            repeatIcon.alt = "Repetir desactivado";
+            break;
+          case 1:
+            repeatIcon.src = "assets/icons/RepetirLista.png"; // Ícono de repetir lista
+            repeatIcon.alt = "Repetir lista";
+            repeatIcon.classList.add("active-list"); // Agregar clase para repetir lista
+            break;
+          case 2:
+            repeatIcon.src = "assets/icons/RepetirCancion.png"; // Ícono de repetir canción
+            repeatIcon.alt = "Repetir canción";
+            repeatIcon.classList.add("active-track"); // Agregar clase para repetir canción
+            break;
+        }
+      }
+
       function formatTime(ms) {
         const minutes = Math.floor(ms / 60000);
         const seconds = ((ms % 60000) / 1000).toFixed(0);
@@ -214,11 +285,13 @@
         totalTime.innerText = formatTime(data.durationMs);
       });
 
+      // Actualizar el ícono según el estado de reproducción
       ipcRenderer.on("playback-status", (event, isCurrentlyPlaying) => {
         isPlaying = isCurrentlyPlaying;
         updatePlayPauseIcon();
       });
 
+      // Función para actualizar el ícono Play/Pause según el estado de reproducción
       function updatePlayPauseIcon() {
         const icon = document.getElementById("play-pause-icon");
         icon.src = isPlaying
@@ -236,9 +309,7 @@
       document
         .getElementById("play-pause-btn")
         .addEventListener("click", () => {
-          isPlaying = !isPlaying;
-          updatePlayPauseIcon();
-          ipcRenderer.send("toggle-play-pause", isPlaying);
+          ipcRenderer.send("toggle-play-pause");
         });
 
       // Control de los botones de anterior, siguiente, aleatorio y repetir

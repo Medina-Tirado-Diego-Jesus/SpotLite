@@ -70,33 +70,47 @@ function requestAccessToken(code) {
 
 // Función para actualizar el token de acceso cuando expire
 function refreshAccessToken() {
-  const tokenOptions = {
-    method: "POST",
-    url: "https://accounts.spotify.com/api/token",
+  console.log("Actualizando token de acceso...");
+  
+  if (!refreshToken) {
+    console.error("No se ha proporcionado un refresh token");
+    return Promise.reject(new Error("No refresh token available"));
+  }
+
+  const authOptions = {
+    method: 'POST',
+    url: 'https://accounts.spotify.com/api/token',
     headers: {
-      Authorization:
-        "Basic " +
-        Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-      "Content-Type": "application/x-www-form-urlencoded",
+      'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
     },
-    data: `grant_type=refresh_token&refresh_token=${refreshToken}`,
+    data: `grant_type=refresh_token&refresh_token=${refreshToken}`
   };
 
-  axios(tokenOptions)
+  return axios(authOptions)
     .then((response) => {
-      accessToken = response.data.access_token;
-      console.log("Token de acceso actualizado:", accessToken);
+      if (response.data.access_token) {
+        accessToken = response.data.access_token;  // Actualiza el token de acceso globalmente
+        console.log("Token de acceso actualizado correctamente.");
+        return accessToken;
+      } else {
+        console.error("No se recibió un nuevo token de acceso.");
+        return Promise.reject(new Error("No new access token received"));
+      }
     })
     .catch((error) => {
-      console.error("Error al actualizar el token de acceso:", error);
+      console.error("Error al actualizar el token de acceso:", error.response ? error.response.data : error.message);
+      return Promise.reject(error);  // Rechaza si hay un error en la actualización del token
     });
 }
+
+
 
 // Función centralizada para realizar solicitudes a la API de Spotify
 function spotifyRequest(method, endpoint, data = null) {
   if (!accessToken) {
-    console.log("El token de acceso no está disponible todavía.");
-    return Promise.reject("Token de acceso no disponible."); // Asegúrate de devolver una promesa rechazada
+    console.log("El token de acceso no está disponible, actualizando...");
+    return refreshAccessToken().then(() => spotifyRequest(method, endpoint, data));  // Vuelve a hacer la solicitud con el nuevo token
   }
 
   const options = {
@@ -115,15 +129,17 @@ function spotifyRequest(method, endpoint, data = null) {
     .then((response) => response.data)
     .catch((error) => {
       if (error.response && error.response.status === 401) {
+        console.log("Token expirado, actualizando...");
         return refreshAccessToken().then(() =>
           spotifyRequest(method, endpoint, data)
-        ); // Actualiza el token y reintenta la solicitud
+        );
       } else {
         console.error(`Error al realizar la solicitud a ${endpoint}:`, error);
-        return Promise.reject(error); // Devolver una promesa rechazada en caso de error
+        return Promise.reject(error);  // Asegúrate de manejar el error adecuadamente
       }
     });
 }
+
 
 // 2. Funciones para obtener información de reproducción y controlar Spotify
 
@@ -161,6 +177,20 @@ function getPlaybackState() {
       console.error("Error al obtener el estado de reproducción:", error);
     });
 }
+function play() {
+  spotifyRequest("PUT", "/play")
+    .then((response) => {
+      console.log("Reproducción iniciada correctamente.");
+    })
+    .catch((error) => {
+      if (error.response && error.response.status === 403) {
+        console.error("Error de permisos. Asegúrate de que tu cuenta de Spotify es Premium y que hay un dispositivo activo.");
+      } else {
+        console.error("Error al iniciar la reproducción:", error);
+      }
+    });
+}
+
 
 // Función para reproducir o pausar la canción
 function togglePlayPause() {
@@ -184,6 +214,30 @@ function toggleShuffle(state) {
       console.error("Error al cambiar el estado del modo aleatorio:", error);
     });
 }
+// Función para manejar el estado de repetir
+function toggleRepeat(state) {
+  let repeatMode;
+  switch (state) {
+    case 0:
+      repeatMode = "off"; // Desactivar repetir
+      break;
+    case 1:
+      repeatMode = "context"; // Repetir lista
+      break;
+    case 2:
+      repeatMode = "track"; // Repetir canción
+      break;
+  }
+
+  spotifyRequest("PUT", `/repeat?state=${repeatMode}`)
+    .then(() => {
+      console.log(`Modo repetir ${repeatMode}`);
+      mainWindow.webContents.send("repeat-status", state); // Enviar el nuevo estado al frontend
+    })
+    .catch((error) => {
+      console.error("Error al cambiar el estado de repetir:", error);
+    });
+}
 
 // Función para cambiar de canción
 function nextTrack() {
@@ -203,8 +257,11 @@ ipcMain.on("seek-track", (event, positionMs) => {
 // 3. Configuración de la ventana principal de Electron
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 490,
+    height: 130,
+    frame: false, // Quita el marco de la ventana
+    transparent: true, // Hace la ventana transparente (opcional)
+    resizable: false, // Evita que la ventana sea redimensionable si lo deseas
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -236,6 +293,11 @@ app.whenReady().then(() => {
   // Escuchar el evento de "toggle-shuffle" desde el frontend
   ipcMain.on("toggle-shuffle", (event, state) => {
     toggleShuffle(state); // Llamar a la función que cambia el modo aleatorio
+  });
+
+  // Escuchar el evento de "toggle-repeat" desde el frontend
+  ipcMain.on("toggle-repeat", (event, state) => {
+    toggleRepeat(state); // Llamar a la función que cambia el modo de repetir
   });
 
   ipcMain.on("previous-track", () => {
