@@ -285,15 +285,19 @@
         totalTime.innerText = formatTime(data.durationMs);
       });
 
-      // Actualizar el ícono según el estado de reproducción
-      ipcRenderer.on("playback-status", (event, isCurrentlyPlaying) => {
-        isPlaying = isCurrentlyPlaying;
-        updatePlayPauseIcon();
+      // Asegúrate de que el frontend escuche el evento emitido
+      ipcRenderer.on("playback-status-updated", (event, isPlaying) => {
+        console.log(
+          "Recibido evento playback-status-updated. Estado de reproducción:",
+          isPlaying
+        ); // Log para verificar recepción
+        updatePlayPauseIcon(isPlaying);
       });
 
       // Función para actualizar el ícono Play/Pause según el estado de reproducción
-      function updatePlayPauseIcon() {
+      function updatePlayPauseIcon(isPlaying) {
         const icon = document.getElementById("play-pause-icon");
+        console.log("Cambiando icono a:", isPlaying ? "Pausa" : "Play"); // Log para depuración
         icon.src = isPlaying
           ? "assets/icons/Pausar.png"
           : "assets/icons/PlaY.png";

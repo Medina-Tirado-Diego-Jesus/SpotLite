@@ -13,14 +13,19 @@ let refreshToken = "";
 let isPlaying = false;
 
 // 1. Funciones relacionadas con la autenticación y manejo de tokens
-// Configuración del servidor Express para manejar la redirección de Spotify
 const server = express();
 
 server.get("/callback", (req, res) => {
   const code = req.query.code || null;
   if (code) {
-    requestAccessToken(code);
-    res.send("Autenticación completada. Puedes cerrar esta ventana.");
+    requestAccessToken(code)
+      .then(() => {
+        res.send("Autenticación completada. Puedes cerrar esta ventana.");
+      })
+      .catch((error) => {
+        res.send("Error en la autenticación.");
+        console.error(error);
+      });
   } else {
     res.send("Error en la autenticación.");
   }
@@ -36,7 +41,7 @@ function authenticateWithSpotify() {
     "user-read-playback-state user-modify-playback-state user-read-currently-playing";
   const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(
     scopes
-  )}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  )}&redirect_uri=${encodeURIComponent(redirectUri)}&show_dialog=true`;
   open(authUrl); // Abre el navegador para que el usuario otorgue permisos
 }
 
@@ -56,12 +61,13 @@ function requestAccessToken(code) {
     )}`,
   };
 
-  axios(tokenOptions)
+  return axios(tokenOptions)
     .then((response) => {
-      accessToken = response.data.access_token; // Asegúrate de que el token se guarda correctamente
-      refreshToken = response.data.refresh_token;
+      accessToken = response.data.access_token;
+      refreshToken = response.data.refresh_token; // Guardamos el refresh token
       console.log("Token de acceso obtenido:", accessToken);
-      getCurrentlyPlaying(); // Llama a esta función una vez obtienes el token
+      console.log("Refresh token obtenido:", refreshToken);
+      getCurrentlyPlaying();
     })
     .catch((error) => {
       console.error("Error al obtener el token de acceso:", error);
@@ -91,35 +97,26 @@ function refreshAccessToken() {
 
   return axios(authOptions)
     .then((response) => {
-      if (response.data.access_token) {
-        accessToken = response.data.access_token; // Actualiza el token de acceso globalmente
-        console.log("Token de acceso actualizado correctamente.");
-        return accessToken;
-      } else {
-        console.error("No se recibió un nuevo token de acceso.");
-        return Promise.reject(new Error("No new access token received"));
-      }
+      accessToken = response.data.access_token;
+      console.log("Token de acceso actualizado correctamente.");
     })
     .catch((error) => {
-      console.error(
-        "Error al actualizar el token de acceso:",
-        error.response ? error.response.data : error.message
-      );
-      return Promise.reject(error); // Rechaza si hay un error en la actualización del token
+      console.error("Error al actualizar el token de acceso:", error);
     });
 }
 
-// Función centralizada para realizar solicitudes a la API de Spotify
 function spotifyRequest(method, endpoint, data = null) {
   if (!accessToken) {
     console.log("El token de acceso no está disponible, actualizando...");
-    return refreshAccessToken().then(() =>
-      spotifyRequest(method, endpoint, data)
-    ); // Vuelve a hacer la solicitud con el nuevo token
+    return refreshAccessToken()
+      .then(() => spotifyRequest(method, endpoint, data))
+      .catch((error) => {
+        console.error("Error al actualizar el token de acceso:", error);
+      });
   }
 
   const options = {
-    method: method,
+    method,
     url: `https://api.spotify.com/v1/me/player${endpoint}`,
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -135,40 +132,48 @@ function spotifyRequest(method, endpoint, data = null) {
     .catch((error) => {
       if (error.response && error.response.status === 401) {
         console.log("Token expirado, actualizando...");
-        return refreshAccessToken().then(() =>
-          spotifyRequest(method, endpoint, data)
-        );
+        return refreshAccessToken()
+          .then(() => spotifyRequest(method, endpoint, data))
+          .catch((error) => {
+            console.error(
+              "Error al actualizar el token después de expiración:",
+              error
+            );
+          });
       } else {
         console.error(`Error al realizar la solicitud a ${endpoint}:`, error);
-        return Promise.reject(error); // Asegúrate de manejar el error adecuadamente
+        return Promise.reject(error); // Propagamos el error para que sea manejado correctamente
       }
     });
 }
 
-// 2. Funciones para obtener información de reproducción y controlar Spotify
-
+// Funciones para obtener información de reproducción
 function getCurrentlyPlaying() {
-  spotifyRequest("GET", "/currently-playing").then((response) => {
-    if (response && response.item) {
-      const song = response.item;
-      const artist = song.artists[0].name;
-      const title = song.name;
-      const albumCover = song.album.images[0].url;
-      const progressMs = response.progress_ms;
-      const durationMs = song.duration_ms;
+  spotifyRequest("GET", "/currently-playing")
+    .then((response) => {
+      if (response && response.item) {
+        const song = response.item;
+        const artist = song.artists[0].name;
+        const title = song.name;
+        const albumCover = song.album.images[0].url;
+        const progressMs = response.progress_ms;
+        const durationMs = song.duration_ms;
 
-      mainWindow.webContents.send("currently-playing", {
-        title,
-        artist,
-        albumCover,
-        progressMs,
-        durationMs,
-      });
-    }
-  });
+        mainWindow.webContents.send("currently-playing", {
+          title,
+          artist,
+          albumCover,
+          progressMs,
+          durationMs,
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Error al obtener la canción en reproducción:", error);
+    });
 }
 
-// Función para obtener el estado de reproducción
+// 2. Función para obtener el estado de reproducción
 function getPlaybackState() {
   spotifyRequest("GET", "")
     .then((response) => {
@@ -181,29 +186,55 @@ function getPlaybackState() {
       console.error("Error al obtener el estado de reproducción:", error);
     });
 }
-function play() {
-  spotifyRequest("PUT", "/play")
-    .then((response) => {
-      console.log("Reproducción iniciada correctamente.");
-    })
-    .catch((error) => {
-      if (error.response && error.response.status === 403) {
-        console.error(
-          "Error de permisos. Asegúrate de que tu cuenta de Spotify es Premium y que hay un dispositivo activo."
-        );
-      } else {
-        console.error("Error al iniciar la reproducción:", error);
-      }
-    });
+
+// 3. Función para reproducir o pausar la canción (nueva versión)
+async function playMusic(deviceId) {
+  try {
+    await spotifyRequest("PUT", "/play", {}, { device_id: deviceId });
+    console.log("Música reproducida.");
+  } catch (error) {
+    console.error("Error al intentar reproducir la canción:", error);
+  }
+}
+async function pauseMusic(deviceId) {
+  try {
+    await spotifyRequest("PUT", "/pause", {}, { device_id: deviceId });
+    console.log("Música pausada.");
+  } catch (error) {
+    console.error("Error al intentar pausar la canción:", error);
+  }
 }
 
-// Función para reproducir o pausar la canción
-function togglePlayPause() {
-  const endpoint = isPlaying ? "/pause" : "/play";
-  spotifyRequest("PUT", endpoint).then(() => {
-    isPlaying = !isPlaying;
-    mainWindow.webContents.send("playback-status", isPlaying);
-  });
+async function togglePlayPause() {
+  try {
+    // Obtener el estado de reproducción actual
+    const playbackState = await spotifyRequest("GET", " ");
+
+    if (!playbackState || !playbackState.device) {
+      console.error("No hay reproducción activa en ningún dispositivo.");
+      return;
+    }
+
+    const isPlaying = playbackState.is_playing;
+    const deviceId = playbackState.device.id;
+    console.log(
+      `Dispositivo activo: ${playbackState.device.name} (ID: ${deviceId})`
+    );
+
+    if (isPlaying) {
+      // Si la música se está reproduciendo, pausar
+      await pauseMusic(deviceId);
+      console.log("Emitir estado de pausa");
+      mainWindow.webContents.send("playback-status-updated", false); // Enviar el nuevo estado al frontend
+    } else {
+      // Si la música no se está reproduciendo, reproducir
+      await playMusic(deviceId);
+      console.log("Emitir estado de reproducción");
+      mainWindow.webContents.send("playback-status-updated", true); // Enviar el nuevo estado al frontend
+    }
+  } catch (error) {
+    console.error("Error al verificar el estado de la reproducción:", error);
+  }
 }
 
 // Función para activar/desactivar el modo aleatorio
@@ -219,6 +250,7 @@ function toggleShuffle(state) {
       console.error("Error al cambiar el estado del modo aleatorio:", error);
     });
 }
+
 // Función para manejar el estado de repetir
 function toggleRepeat(state) {
   let repeatMode;
@@ -259,14 +291,14 @@ ipcMain.on("seek-track", (event, positionMs) => {
   });
 });
 
-// 3. Configuración de la ventana principal de Electron
+// 4. Configuración de la ventana principal de Electron
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 490,
     height: 130,
-    frame: false, // Quita el marco de la ventana
-    transparent: true, // Hace la ventana transparente (opcional)
-    resizable: false, // Evita que la ventana sea redimensionable si lo deseas
+    frame: false,
+    transparent: true,
+    resizable: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -277,12 +309,10 @@ function createWindow() {
   mainWindow.loadFile("index.html");
 }
 
-// Iniciar la aplicación Electron
 app.whenReady().then(() => {
   createWindow();
   authenticateWithSpotify();
 
-  // Actualizar el estado de la reproducción y la barra de progreso cada segundo
   setInterval(() => {
     getCurrentlyPlaying();
   }, 1000);
@@ -295,14 +325,12 @@ app.whenReady().then(() => {
     togglePlayPause();
   });
 
-  // Escuchar el evento de "toggle-shuffle" desde el frontend
   ipcMain.on("toggle-shuffle", (event, state) => {
-    toggleShuffle(state); // Llamar a la función que cambia el modo aleatorio
+    toggleShuffle(state);
   });
 
-  // Escuchar el evento de "toggle-repeat" desde el frontend
   ipcMain.on("toggle-repeat", (event, state) => {
-    toggleRepeat(state); // Llamar a la función que cambia el modo de repetir
+    toggleRepeat(state);
   });
 
   ipcMain.on("previous-track", () => {
